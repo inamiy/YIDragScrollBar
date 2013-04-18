@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 @protocol YIDragScrollBarDelegate <NSObject>
-
+@optional
 - (void)dragScrollBarWillBeginDragging:(UIScrollView*)scrollView;
 - (void)dragScrollBarWillEndDragging:(UIScrollView*)scrollView;
 
