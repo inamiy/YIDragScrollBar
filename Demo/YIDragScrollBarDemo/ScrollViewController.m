@@ -9,7 +9,7 @@
 #import "ScrollViewController.h"
 #import <QuartzCore/QuartzCore.h>
 
-@interface ScrollViewController () <UIScrollViewDelegate>
+@interface ScrollViewController () <UIScrollViewDelegate, YIDragScrollBarDelegate>
 
 @end
 
@@ -52,6 +52,8 @@
     if (!UIEdgeInsetsEqualToEdgeInsets(self.defaultDraggingHorizontalScrollIndicatorImageInsets, UIEdgeInsetsZero)) {
         self.scrollView.draggingHorizontalScrollIndicatorImageInsets = self.defaultDraggingHorizontalScrollIndicatorImageInsets;
     }
+    
+    self.scrollView.dragScrollBarDelegate = self;
 }
 
 // for iOS5
@@ -67,6 +69,20 @@
 - (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView
 {
     return self.backgroundView;
+}
+
+#pragma mark -
+
+#pragma mark YIDragScrollBarDelegate
+
+- (void)dragScrollBarWillBeginDragging:(UIScrollView *)scrollView
+{
+    NSLog(@"%s",__func__);
+}
+
+- (void)dragScrollBarWillEndDragging:(UIScrollView *)scrollView
+{
+    NSLog(@"%s",__func__);
 }
 
 @end

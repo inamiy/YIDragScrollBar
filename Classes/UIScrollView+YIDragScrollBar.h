@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "YIDragScrollBarDelegate.h"
 
 @interface UIScrollView (YIDragScrollBar) <UIGestureRecognizerDelegate>
 
@@ -20,7 +21,11 @@
 
 - (void)resetScrollIndicators;
 
-#pragma mark DraggingScrollIndicator
+#pragma mark DragScrollBar
+
+@property (nonatomic, weak) id <YIDragScrollBarDelegate> dragScrollBarDelegate;
+
+@property (nonatomic, readonly) BOOL isDraggingScrollBar;
 
 @property (nonatomic, strong, readonly) UIView* draggingVerticalScrollIndicatorView;
 @property (nonatomic, strong, readonly) UIView* draggingHorizontalScrollIndicatorView;

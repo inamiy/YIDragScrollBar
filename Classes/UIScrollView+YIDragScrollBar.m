@@ -28,6 +28,8 @@
 
 static const char __showsScrollIndicatorBackgroundKey;
 
+static const char __dragScrollBarDelegateKey;
+
 static const char __draggingVerticalScrollIndicatorViewKey;
 static const char __draggingHorizontalScrollIndicatorViewKey;
 
@@ -153,7 +155,7 @@ static char __draggingScrollBarObservingContext;
 
 #pragma mark Accessors
 
-#pragma mark indicator
+#pragma mark original-indicator
 
 - (BOOL)canScrollVertically
 {
@@ -224,6 +226,24 @@ static char __draggingScrollBarObservingContext;
     }
     
     return indicatorView;
+}
+
+#pragma mark dragging-indicator
+
+- (BOOL)isDraggingScrollBar
+{
+    return self.draggingScrollBarGestureRecognizer.state != UIGestureRecognizerStatePossible;
+}
+
+- (id <YIDragScrollBarDelegate>)dragScrollBarDelegate
+{
+    id <YIDragScrollBarDelegate> dragScrollBarDelegate = objc_getAssociatedObject(self, &__dragScrollBarDelegateKey);
+    return dragScrollBarDelegate;
+}
+
+- (void)setDragScrollBarDelegate:(id <YIDragScrollBarDelegate>)dragScrollBarDelegate
+{
+    objc_setAssociatedObject(self, &__dragScrollBarDelegateKey, dragScrollBarDelegate, OBJC_ASSOCIATION_ASSIGN);
 }
 
 - (YIDragScrollIndicatorView*)draggingVerticalScrollIndicatorView
@@ -340,16 +360,29 @@ static char __draggingScrollBarObservingContext;
 - (void)handleDraggingScrollBarGesture:(YIDragScrollBarGestureRecognizer*)gesture
 {
     if (gesture.state == UIGestureRecognizerStateBegan) {
+        
+        if ([self.dragScrollBarDelegate respondsToSelector:@selector(dragScrollBarWillBeginDragging:)]) {
+            [self.dragScrollBarDelegate dragScrollBarWillBeginDragging:self];
+        }
+        
         [self setupDraggingScrollIndicatorViewsAnimated:YES];
+        
     }
     else if (gesture.state == UIGestureRecognizerStateChanged) {
+        
         [self updateContentOffsetViaDragScrollBar];
+        
     }
     else if (gesture.state == UIGestureRecognizerStateEnded ||
              gesture.state == UIGestureRecognizerStateCancelled ||
              gesture.state == UIGestureRecognizerStateFailed) {
         
+        if ([self.dragScrollBarDelegate respondsToSelector:@selector(dragScrollBarWillEndDragging:)]) {
+            [self.dragScrollBarDelegate dragScrollBarWillEndDragging:self];
+        }
+        
         [self teardownDraggingScrollIndicatorViewsAnimated:YES];
+        
     }
 }
 
