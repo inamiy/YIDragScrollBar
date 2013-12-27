@@ -13,6 +13,8 @@
 
 #pragma mark Common
 
+@property (nonatomic) BOOL canDragScrollBar;
+
 @property (nonatomic, readonly) BOOL canScrollVertically;
 @property (nonatomic, readonly) BOOL canScrollHorizontally;
 

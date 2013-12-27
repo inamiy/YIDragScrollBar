@@ -235,6 +235,16 @@ static char __draggingScrollBarObservingContext;
     return self.draggingScrollBarGestureRecognizer.state != UIGestureRecognizerStatePossible;
 }
 
+- (BOOL)canDragScrollBar
+{
+    return self.draggingScrollBarGestureRecognizer.enabled;
+}
+
+- (void)setCanDragScrollBar:(BOOL)canDragScrollBar
+{
+    self.draggingScrollBarGestureRecognizer.enabled = canDragScrollBar;
+}
+
 - (id <YIDragScrollBarDelegate>)dragScrollBarDelegate
 {
     id <YIDragScrollBarDelegate> dragScrollBarDelegate = objc_getAssociatedObject(self, &__dragScrollBarDelegateKey);
