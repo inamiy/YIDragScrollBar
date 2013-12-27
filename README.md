@@ -1,4 +1,4 @@
-YIDragScrollBar 1.1.0
+YIDragScrollBar 1.1.1
 =====================
 
 Attaches draggable scroll bar on top of original UIScrollView for iOS5+, works like a drug.
