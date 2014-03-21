@@ -7,12 +7,13 @@
 //
 
 #import "AppDelegate.h"
+#import "YIDragScrollBar.h"
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    [YIDragScrollBar install];
+//    [UIScrollView setDefaultDragScrollBarEnabled:NO];
     
     return YES;
 }

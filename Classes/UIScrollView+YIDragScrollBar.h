@@ -38,4 +38,9 @@
 @property (nonatomic) UIEdgeInsets draggingVerticalScrollIndicatorImageInsets;   // only uses left & right, default = {.left = 10}
 @property (nonatomic) UIEdgeInsets draggingHorizontalScrollIndicatorImageInsets; // only uses top & bottom, default = {.top = 10}
 
+#pragma mark Default Settings
+
+// set NO to disable dragScrollBar on each scrollView-init. defalut = YES.
++ (void)setDefaultDragScrollBarEnabled:(BOOL)defaultDragScrollBarEnabled;
+
 @end

@@ -12,6 +12,8 @@
 #import <objc/runtime.h>
 #import <QuartzCore/QuartzCore.h>
 
+#import "JRSwizzle.h"
+
 #define STRETCH_DURATION    0.3
 #define HIDE_DURATION       0.2
 
@@ -44,6 +46,8 @@ static const char __draggingHorizontalScrollIndicatorBackgroundViewKey;
 
 static char __draggingScrollBarObservingContext;
 
+static BOOL __defaultDragScrollBarEnabled = YES;
+
 
 @interface UIScrollView (YIDragScrollBarPrivate)
 
@@ -58,100 +62,10 @@ static char __draggingScrollBarObservingContext;
 
 @implementation UIScrollView (YIDragScrollBar)
 
-- (void)yi_init
++ (void)setDefaultDragScrollBarEnabled:(BOOL)defaultDragScrollBarEnabled
 {
-    self.showsScrollIndicatorBackground = YES;
-    
-    self.draggingVerticalScrollIndicatorImageInsets = UIEdgeInsetsMake(0, 10, 0, 0);   // stretches to left
-    self.draggingHorizontalScrollIndicatorImageInsets = UIEdgeInsetsMake(10, 0, 0, 0); // stretches to top
-    
-    YIDragScrollBarGestureRecognizer* gesture = [[YIDragScrollBarGestureRecognizer alloc] initWithTarget:self action:@selector(handleDraggingScrollBarGesture:)];
-    [self addGestureRecognizer:gesture];
-    
-    self.draggingScrollBarGestureRecognizer = gesture;
+    __defaultDragScrollBarEnabled = defaultDragScrollBarEnabled;
 }
-
-- (id)yi_initWithFrame:(CGRect)frame
-{
-    id self2 = [self yi_initWithFrame:frame];
-    if (self2) {
-        [self2 yi_init];
-    }
-    return self2;
-}
-
-- (id)yi_initWithCoder:(NSCoder *)aDecoder
-{
-    id self2 = [self yi_initWithCoder:aDecoder];
-    if (self2) {
-        [self2 yi_init];
-    }
-    return self2;
-}
-
-- (void)yi_willMoveToSuperview:(UIView *)newSuperview
-{
-    [self yi_willMoveToSuperview:newSuperview];
-    
-    if (newSuperview) {
-        if (!self.isObservingForDraggingScrollBar) {
-            [self addObserver:self forKeyPath:@"contentOffset" options:NSKeyValueObservingOptionNew context:&__draggingScrollBarObservingContext];
-            [self addObserver:self forKeyPath:@"contentSize" options:NSKeyValueObservingOptionNew context:&__draggingScrollBarObservingContext];
-            [self addObserver:self forKeyPath:@"frame" options:NSKeyValueObservingOptionNew context:&__draggingScrollBarObservingContext];
-            
-            self.isObservingForDraggingScrollBar = YES;
-        }
-    }
-    else {
-        if (self.isObservingForDraggingScrollBar) {
-            [self removeObserver:self forKeyPath:@"contentOffset"];
-            [self removeObserver:self forKeyPath:@"contentSize"];
-            [self removeObserver:self forKeyPath:@"frame"];
-            
-            self.isObservingForDraggingScrollBar = NO;
-        }
-    }
-}
-
-// KVO
-- (void)yi_observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
-{
-    if (context == &__draggingScrollBarObservingContext) {
-        
-        if ([keyPath isEqualToString:@"contentOffset"]) {
-            
-            [self layoutDraggingScrollIndicatorViews];
-            
-            // remove all animations if scrolled
-            [self.draggingVerticalScrollIndicatorView.layer removeAllAnimations];
-            [self.draggingHorizontalScrollIndicatorView.layer removeAllAnimations];
-            
-            [self.draggingVerticalScrollIndicatorBackgroundView.layer removeAllAnimations];
-            [self.draggingHorizontalScrollIndicatorBackgroundView.layer removeAllAnimations];
-            
-        }
-        //
-        // reset dragging-indicators when...
-        // 1. contentSize changed (frequently occurs in UIWebView)
-        // 2. frame changed (mainly for rotation)
-        //
-        else if ([keyPath isEqualToString:@"contentSize"] || [keyPath isEqualToString:@"frame"]) {
-            
-            if (self.draggingScrollBarGestureRecognizer.state != UIGestureRecognizerStatePossible) {
-                [self teardownDraggingScrollIndicatorViewsAnimated:NO];
-                [self resetScrollIndicators];
-                [self setupDraggingScrollIndicatorViewsAnimated:NO];
-                [self layoutDraggingScrollIndicatorViews];
-            }
-            
-        }
-    }
-    else {
-        [self yi_observeValueForKeyPath:keyPath ofObject:object change:change context:context];
-    }
-}
-
-#pragma mark -
 
 #pragma mark Accessors
 
@@ -877,6 +791,127 @@ static char __draggingScrollBarObservingContext;
     // make sure to bring original-indicators to front
     [self bringSubviewToFront:verticalScrollIndicatorView];
     [self bringSubviewToFront:horizontalScrollIndicatorView];
+}
+
+@end
+
+
+#pragma mark -
+
+
+@implementation UIScrollView (YIDragScrollBarSwizzling)
+
++ (void)load
+{
+    [UIScrollView jr_swizzleMethod:@selector(initWithFrame:)
+                        withMethod:@selector(yi_initWithFrame:)
+                             error:NULL];
+    
+    [UIScrollView jr_swizzleMethod:@selector(initWithCoder:)
+                        withMethod:@selector(yi_initWithCoder:)
+                             error:NULL];
+    
+    [UIScrollView jr_swizzleMethod:@selector(willMoveToSuperview:)
+                        withMethod:@selector(yi_willMoveToSuperview:)
+                             error:NULL];
+    
+    [UIScrollView jr_swizzleMethod:@selector(observeValueForKeyPath:ofObject:change:context:)
+                        withMethod:@selector(yi_observeValueForKeyPath:ofObject:change:context:)
+                             error:NULL];
+}
+
+- (void)yi_init
+{
+    self.showsScrollIndicatorBackground = YES;
+    
+    self.draggingVerticalScrollIndicatorImageInsets = UIEdgeInsetsMake(0, 10, 0, 0);   // stretches to left
+    self.draggingHorizontalScrollIndicatorImageInsets = UIEdgeInsetsMake(10, 0, 0, 0); // stretches to top
+    
+    YIDragScrollBarGestureRecognizer* gesture = [[YIDragScrollBarGestureRecognizer alloc] initWithTarget:self action:@selector(handleDraggingScrollBarGesture:)];
+    gesture.enabled = __defaultDragScrollBarEnabled;
+    [self addGestureRecognizer:gesture];
+    
+    self.draggingScrollBarGestureRecognizer = gesture;
+}
+
+- (id)yi_initWithFrame:(CGRect)frame
+{
+    id self2 = [self yi_initWithFrame:frame];
+    if (self2) {
+        [self2 yi_init];
+    }
+    return self2;
+}
+
+- (id)yi_initWithCoder:(NSCoder *)aDecoder
+{
+    id self2 = [self yi_initWithCoder:aDecoder];
+    if (self2) {
+        [self2 yi_init];
+    }
+    return self2;
+}
+
+- (void)yi_willMoveToSuperview:(UIView *)newSuperview
+{
+    [self yi_willMoveToSuperview:newSuperview];
+    
+    if (newSuperview) {
+        if (!self.isObservingForDraggingScrollBar) {
+            [self addObserver:self forKeyPath:@"contentOffset" options:NSKeyValueObservingOptionNew context:&__draggingScrollBarObservingContext];
+            [self addObserver:self forKeyPath:@"contentSize" options:NSKeyValueObservingOptionNew context:&__draggingScrollBarObservingContext];
+            [self addObserver:self forKeyPath:@"frame" options:NSKeyValueObservingOptionNew context:&__draggingScrollBarObservingContext];
+            
+            self.isObservingForDraggingScrollBar = YES;
+        }
+    }
+    else {
+        if (self.isObservingForDraggingScrollBar) {
+            [self removeObserver:self forKeyPath:@"contentOffset"];
+            [self removeObserver:self forKeyPath:@"contentSize"];
+            [self removeObserver:self forKeyPath:@"frame"];
+            
+            self.isObservingForDraggingScrollBar = NO;
+        }
+    }
+}
+
+// KVO
+- (void)yi_observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if (context == &__draggingScrollBarObservingContext) {
+        
+        if ([keyPath isEqualToString:@"contentOffset"]) {
+            
+            [self layoutDraggingScrollIndicatorViews];
+            
+            // remove all animations if scrolled
+            [self.draggingVerticalScrollIndicatorView.layer removeAllAnimations];
+            [self.draggingHorizontalScrollIndicatorView.layer removeAllAnimations];
+            
+            [self.draggingVerticalScrollIndicatorBackgroundView.layer removeAllAnimations];
+            [self.draggingHorizontalScrollIndicatorBackgroundView.layer removeAllAnimations];
+            
+        }
+        //
+        // reset dragging-indicators when...
+        // 1. contentSize changed (frequently occurs in UIWebView)
+        // 2. frame changed (mainly for rotation)
+        //
+        else if ([keyPath isEqualToString:@"contentSize"] || [keyPath isEqualToString:@"frame"]) {
+            
+            if (self.draggingScrollBarGestureRecognizer.state != UIGestureRecognizerStatePossible) {
+                [self teardownDraggingScrollIndicatorViewsAnimated:NO];
+                [self resetScrollIndicators];
+                [self setupDraggingScrollIndicatorViewsAnimated:NO];
+                [self layoutDraggingScrollIndicatorViews];
+            }
+            
+        }
+    }
+    else {
+        [self yi_observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
 }
 
 @end
