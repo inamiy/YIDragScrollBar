@@ -1,4 +1,4 @@
-YIDragScrollBar 1.1.1
+YIDragScrollBar 1.2.0
 =====================
 
 Attaches draggable scroll bar on top of original UIScrollView for iOS5+, works like a drug.
@@ -26,7 +26,7 @@ pod 'YIDragScrollBar'
 How to use
 ----------
 
-Install in 1 second!
+Just import the files, and all set!
 
 ```
 #import "YIDragScrollBar.h"
@@ -35,10 +35,10 @@ Install in 1 second!
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    [YIDragScrollBar install];
-    
-    // install to particular class only
-    // [YIDragScrollBar installToUIScrollViewSubclass:[MyCustomScrollView class]];
+    // set NO to disable dragScrollBar on each scrollView-init. defalut = YES.
+    // [UIScrollView setDefaultDragScrollBarEnabled:NO];
+
+    return YES;
 }
 ```
 
