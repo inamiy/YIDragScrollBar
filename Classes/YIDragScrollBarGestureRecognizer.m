@@ -171,6 +171,7 @@
 
 - (BOOL)canPreventGestureRecognizer:(UIGestureRecognizer *)preventedGestureRecognizer
 {
+    // stop other gestures e.g. UIScrollViewPanGestureRecognizer
     if (!CGPointEqualToPoint(_firstTouchLocation, CGPointZero)) {
         return YES;
     }
@@ -181,10 +182,11 @@
 
 - (BOOL)canBePreventedByGestureRecognizer:(UIGestureRecognizer *)preventingGestureRecognizer
 {
-    if (!CGPointEqualToPoint(_firstTouchLocation, CGPointZero)) {
+    if (!CGPointEqualToPoint(_firstTouchLocation, CGPointZero) && ![preventingGestureRecognizer isKindOfClass:[UIScreenEdgePanGestureRecognizer class]]) {
         
         //
-        // Force-cancel other gestures (e.g. scrolling) for iOS6
+        // Force-cancel other gestures (e.g. scrolling) for iOS6,
+        // except UIScreenEdgePanGestureRecognizer which should have higher priority.
         //
         // NOTE:
         // iOS5 calls canPreventGestureRecognizer when other gesture is active but not for iOS6,
